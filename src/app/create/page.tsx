@@ -10,6 +10,7 @@ import { PlatformDraftCard } from '@/components/platform-drafts/PlatformDraftCar
 import { Toast, useToast } from '@/components/ui/Toast';
 import type { Platform, GeneratedDrafts } from '@/types/platform';
 import type { GenerateTextResponse, GenerateImageResponse } from '@/types/api';
+import { getHistoryStorage } from '@/lib/storage';
 
 function CreatePageContent() {
   const searchParams = useSearchParams();
@@ -58,6 +59,20 @@ function CreatePageContent() {
 
       const data: GenerateTextResponse = await res.json();
       setDrafts(data.drafts);
+
+      // 履歴に保存
+      try {
+        const storage = getHistoryStorage();
+        await storage.saveGeneration({
+          theme,
+          referenceText: referenceText || undefined,
+          platforms,
+          drafts: data.drafts,
+        });
+      } catch (saveErr) {
+        console.error('履歴の保存に失敗:', saveErr);
+      }
+
       showToast('テキストの生成が完了しました！', 'success');
     } catch (err) {
       const message =
